@@ -1,0 +1,12 @@
+# .gitignore (Ignore Unnecessary Files)
+__pycache__/
+db.sqlite3
+*.pyc
+*.pyo
+*.env
+*.log
+/static/
+/media/
+venv/
+.idea/
+.DS_Store
