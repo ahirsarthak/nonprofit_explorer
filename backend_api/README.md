@@ -16,3 +16,6 @@ This project is the foundation for a **full-stack SaaS** solution, with several 
 - **Backend**: Django, Python  
 - **Data Storage**: Apache Iceberg, AWS S3  
 - **ML/AI Integration**: Potential for NLP-driven enhancements 
+
+# TO RUN
+- uvicorn config.asgi:application --host 127.0.0.1 --port 8000 --reload --log-level debug
