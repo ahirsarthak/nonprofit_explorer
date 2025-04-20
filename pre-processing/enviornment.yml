@@ -1,0 +1,14 @@
+name: spark_glue_env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - openjdk=11
+  - pyspark=3.5
+  - findspark
+  - boto3
+  - jupyterlab
+  - ipykernel
+  - dotenv
+  - subprocess
+
