@@ -1,0 +1,295 @@
+{
+  "table": {
+    "name": "state_table",
+    "catalog": "my_catalog",
+    "namespace": "nonprofit",
+    "description": "IRS Exempt Organizations Business Master File - November 2023",
+    "primary_key": [
+      "EIN"
+    ],
+    "partition_by": [
+      "STATE"
+    ],
+    "tags": [
+      "irs",
+      "nonprofit",
+      "exempt",
+      "public_data"
+    ],
+    "columns": [
+      {
+        "name": "EIN",
+        "type": "STRING",
+        "description": "Employer Identification Number (EIN) assigned by IRS"
+      },
+      {
+        "name": "NAME",
+        "type": "STRING",
+        "description": "Primary name of organization"
+      },
+      {
+        "name": "ICO",
+        "type": "STRING",
+        "description": "In care of name (person to direct correspondence to)"
+      },
+      {
+        "name": "STREET",
+        "type": "STRING",
+        "description": "Street address"
+      },
+      {
+        "name": "CITY",
+        "type": "STRING",
+        "description": "City of the organization"
+      },
+      {
+        "name": "STATE",
+        "type": "STRING",
+        "description": "Two-letter state abbreviation"
+      },
+      {
+        "name": "ZIP",
+        "type": "STRING",
+        "description": "Zip code (May include ZIP+4 format like '04416-0000')"
+      },
+      {
+        "name": "GROUP",
+        "type": "STRING",
+        "description": "Group Exemption Number (GEN)"
+      },
+      {
+        "name": "SUBSECTION",
+        "type": "STRING",
+        "description": "IRS subsection code under 501(c)",
+        "value_mappings": {
+          "01": "Government Instrumentality",
+          "02": "Title-Holding Corporation",
+          "03": "Charitable, Educational, Scientific, Religious, etc.",
+          "04": "Civic Leagues and Social Welfare",
+          "05": "Agricultural and Horticultural",
+          "06": "Business Leagues and Trade Associations",
+          "07": "Social and Recreational Clubs",
+          "08": "Fraternal Beneficiary Societies",
+          "09": "Voluntary Employees' Beneficiary Associations",
+          "10": "Domestic Fraternal Societies",
+          "11": "Teachers Retirement Fund Associations",
+          "12": "Mutual Insurance and Utility Companies",
+          "13": "Cemeteries and Burial Societies",
+          "14": "Credit Unions",
+          "15": "Mutual Insurance (Non-Life)",
+          "16": "Crop Financing Corps",
+          "17": "Supplemental Unemployment Benefit Trusts",
+          "18": "Employee Pension Trusts",
+          "19": "War Veterans\u2019 Organizations",
+          "20": "Legal Services Organizations",
+          "21": "Black Lung Trusts",
+          "22": "Multiemployer Pension Plans",
+          "23": "Veterans Associations (Pre-1880)",
+          "24": "ERISA Section 4049 Trusts",
+          "25": "Pension Title Holding Corps",
+          "26": "High Risk Health Insurance Orgs",
+          "27": "Workers\u2019 Compensation Reinsurance",
+          "29": "ACA Qualified Health Issuers",
+          "40": "Religious/ Apostolic Assoc. (501(d))",
+          "50": "Hospital Service Orgs (501(e))",
+          "60": "Educational Service Orgs (501(f))",
+          "70": "Child Care Orgs (501(k))",
+          "71": "Charitable Risk Pools",
+          "81": "Tuition Programs",
+          "92": "Private Foundation (4947(a)(1))"
+        }
+      },
+      {
+        "name": "AFFILIATION",
+        "type": "STRING",
+        "description": "Affiliation code describing the organizational grouping",
+        "value_mappings": {
+          "1": "Central organization (no group exemption)",
+          "2": "Intermediate organization (no group exemption)",
+          "3": "Independent organization or auxiliary",
+          "6": "Parent organization (not a church or 501(c)(1))",
+          "7": "Intermediate in a group ruling",
+          "8": "Parent church or 501(c)(1)",
+          "9": "Subordinate in a group ruling"
+        }
+      },
+      {
+        "name": "CLASSIFICATION",
+        "type": "STRING",
+        "description": "Classification code(s) for further breakdown of the subsection"
+      },
+      {
+        "name": "RULING",
+        "type": "STRING",
+        "description": "Date when exemption was granted (YYYYMM)"
+      },
+      {
+        "name": "DEDUCTIBILITY",
+        "type": "STRING",
+        "description": "Code describing whether donations are tax deductible",
+        "value_mappings": {
+          "1": "Contributions are deductible",
+          "2": "Contributions are not deductible",
+          "4": "Contributions are deductible by treaty (foreign orgs)"
+        }
+      },
+      {
+        "name": "FOUNDATION",
+        "type": "STRING",
+        "description": "Foundation type code",
+        "value_mappings": {
+          "00": "All organizations except 501(c)(3)",
+          "02": "Private operating foundation exempt from excise tax",
+          "03": "Other private operating foundation",
+          "04": "Private non-operating foundation",
+          "09": "Suspense",
+          "10": "Church 170(b)(1)(A)(i)",
+          "11": "School 170(b)(1)(A)(ii)",
+          "12": "Hospital or medical research org 170(b)(1)(A)(iii)",
+          "13": "Government college/university support org 170(b)(1)(A)(iv)",
+          "14": "Government unit 170(b)(1)(A)(v)",
+          "15": "Publicly supported org 170(b)(1)(A)(vi)",
+          "16": "Org meeting 509(a)(2) public support test",
+          "17": "Supporting org under 509(a)(3)",
+          "18": "Public safety testing org under 509(a)(4)",
+          "21": "509(a)(3) Type I",
+          "22": "509(a)(3) Type II",
+          "23": "509(a)(3) Type III (functionally integrated)",
+          "24": "509(a)(3) Type III (not functionally integrated)"
+        }
+      },
+      {
+        "name": "ACTIVITY",
+        "type": "STRING",
+        "description": "Activity codes (obsolete but still present in older orgs)"
+      },
+      {
+        "name": "ORGANIZATION",
+        "type": "STRING",
+        "description": "Type of organization",
+        "value_mappings": {
+          "1": "Corporation",
+          "2": "Trust",
+          "3": "Co-operative",
+          "4": "Partnership",
+          "5": "Association"
+        }
+      },
+      {
+        "name": "STATUS",
+        "type": "STRING",
+        "description": "Exempt organization status code"
+      },
+      {
+        "name": "TAX_PERIOD",
+        "type": "STRING",
+        "description": "Most recent tax filing period (YYYYMM)"
+      },
+      {
+        "name": "ASSET_CD",
+        "type": "STRING",
+        "description": "Asset bucket code",
+        "value_mappings": {
+          "0": "$0",
+          "1": "$1 to $9,999",
+          "2": "$10,000 to $24,999",
+          "3": "$25,000 to $99,999",
+          "4": "$100,000 to $499,999",
+          "5": "$500,000 to $999,999",
+          "6": "$1,000,000 to $4,999,999",
+          "7": "$5,000,000 to $9,999,999",
+          "8": "$10,000,000 to $49,999,999",
+          "9": "$50,000,000 or more"
+        }
+      },
+      {
+        "name": "INCOME_CD",
+        "type": "STRING",
+        "description": "Income bucket code (see ASSET_CD for ranges)"
+      },
+      {
+        "name": "FILING_REQ_CD",
+        "type": "STRING",
+        "description": "Filing requirement code",
+        "value_mappings": {
+          "01": "990 or 990EZ required",
+          "02": "990-N required (< $50K income)",
+          "03": "Group return",
+          "04": "990-BL (Black Lung Trusts)",
+          "06": "Not required (church)",
+          "07": "Government 501(c)(1)",
+          "13": "Not required (religious org)",
+          "14": "Not required (state/political subdivision)",
+          "00": "Not required (other)"
+        }
+      },
+      {
+        "name": "PF_FILING_REQ_CD",
+        "type": "STRING",
+        "description": "Private foundation filing requirement",
+        "value_mappings": {
+          "1": "Required to file 990-PF",
+          "0": "Not required to file 990-PF"
+        }
+      },
+      {
+        "name": "ACCT_PD",
+        "type": "STRING",
+        "description": "Accounting period month (MM)"
+      },
+      {
+        "name": "ASSET_AMT",
+        "type": "STRING",
+        "description": "Dollar amount of assets"
+      },
+      {
+        "name": "INCOME_AMT",
+        "type": "STRING",
+        "description": "Dollar amount of income (Value may be negative)"
+      },
+      {
+        "name": "REVENUE_AMT",
+        "type": "STRING",
+        "description": "Form 990 revenue amount (Value may be negative)"
+      },
+      {
+        "name": "NTEE_CD",
+        "type": "STRING",
+        "description": "National Taxonomy of Exempt Entities code (First letter maps to broad category like 'B' for Education, 'A' for Arts; support multi-category lookups like ['Education', 'Arts'] via first-letter codes)",
+        "value_mappings": {
+          "A": "Arts, Culture and Humanities",
+          "B": "Education",
+          "C": "Environment",
+          "D": "Animal-Related",
+          "E": "Health Care",
+          "F": "Mental Health & Crisis Intervention",
+          "G": "Voluntary Health Associations & Medical Disciplines",
+          "H": "Medical Research",
+          "I": "Crime & Legal-Related",
+          "J": "Employment",
+          "K": "Food, Agriculture and Nutrition",
+          "L": "Housing & Shelter",
+          "M": "Public Safety, Disaster Preparedness and Relief",
+          "N": "Recreation & Sports",
+          "O": "Youth Development",
+          "P": "Human Services",
+          "Q": "International, Foreign Affairs and National Security",
+          "R": "Civil Rights, Social Action & Advocacy",
+          "S": "Community Improvement & Capacity Building",
+          "T": "Philanthropy, Voluntarism & Grantmaking Foundations",
+          "U": "Science & Technology",
+          "V": "Social Science",
+          "W": "Public & Societal Benefit",
+          "X": "Religion-Related",
+          "Y": "Mutual & Membership Benefit",
+          "Z": "Unknown"
+        }
+      },
+      {
+        "name": "SORT_NAME",
+        "type": "STRING",
+        "description": "Secondary sort name or alternate/trade name"
+      }
+    ]
+  }
+}

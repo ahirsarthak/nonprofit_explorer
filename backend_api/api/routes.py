@@ -1,7 +1,10 @@
 from django.urls import path
-from .functions import sample_api
+from .views import interpret_and_query, recent_submissions, sample_api
+
 
 print("ibn")
 urlpatterns = [
     path('sample/', sample_api, name='sample-api'),
+    path('query/', interpret_and_query),
+    path('recent/', recent_submissions),
 ]
