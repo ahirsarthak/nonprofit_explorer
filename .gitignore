@@ -11,3 +11,7 @@ venv/
 .idea/
 .DS_Store
 .ipynb_checkpoints
+lib/
+bin/
+plugin/
+var/

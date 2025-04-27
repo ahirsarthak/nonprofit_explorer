@@ -2,15 +2,11 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import JsonResponse
-from openai import OpenAI
 from .trino_query import run_trino_query
-from .functions import save_submission, get_last_submissions
-from .spark_query import run_query_on_iceberg
-import os, json
-from django.conf import settings
-from dotenv import load_dotenv
-
-load_dotenv()  # Load variables from .env file
+from .functions import is_query_allowed, save_submission, get_last_submissions, get_ip_from_request,  load_table_metadata, build_prompt, generate_sql_with_openai, _store_failed_submission, _store_submission_output
+#from .spark_query import run_query_on_iceberg
+from datetime import datetime
+import uuid
 
 @api_view(['GET', 'POST'])
 def sample_api(request):
@@ -25,41 +21,42 @@ def sample_api(request):
 @api_view(['POST'])
 def interpret_and_query(request):
     query = request.data.get('query')
-    #print(query)
-    ip = request.data.get('ip_address') or \
-         request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR')) or None
+    if not query or not query.strip():
+        return JsonResponse({'error': 'Please enter a question or query to generate results.'}, status=400)
+    ip = get_ip_from_request(request)
+    metadata = load_table_metadata()
+    prompt = build_prompt(metadata, query)
 
-    timestamp = save_submission(query, ip)
-
-    meta_path = os.path.join(settings.BASE_DIR, 'api', 'table_metadata.json')
-    with open(meta_path, 'r') as f:
-        metadata = json.load(f)
-
-    prompt = f"""Convert the user's question into Polars SQL using the metadata: {json.dumps(metadata)}.
-
-User Question: {query}
-"""
-
-    client = OpenAI(
-            api_key=os.environ["OPEN_AI_API"]
-    )
-    response = client.chat.completions.create(
-        model='gpt-4o',
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant for SQL generation."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    sql = response.choices[0].message.content.strip()
-
-    print(sql)
+    sql = generate_sql_with_openai(prompt)
+    allowed, forbidden_message = is_query_allowed(sql)
+    if not allowed:
+        # Generate a submission ID for tracking, but DO NOT save to submissions.json
+        submission_id = str(uuid.uuid4())
+        _store_failed_submission(
+            submission_id, sql, prompt, forbidden_message,
+            user_query=query, ip_address=ip, timestamp=datetime.now().isoformat()
+        )
+        return JsonResponse({'error': forbidden_message}, status=400)
 
     try:
         results = run_trino_query(sql)
     except Exception as e:
-        return JsonResponse({'error': 'Trino query failed', 'sql': sql, 'details': str(e)})
+        submission_id = save_submission(query, ip)
+        _store_failed_submission(
+            submission_id, sql, prompt, str(e),
+            user_query=query, ip_address=ip, timestamp=datetime.now().isoformat()
+        )
+        # Only return a user-friendly message
+        return JsonResponse({
+            'error': 'An error occurred while processing your query. Please check your input or try again later.'
+        }, status=400)
 
-    return JsonResponse({'sql': sql, 'results': results})
+    submission_id = save_submission(query, ip)
+    _store_submission_output(
+        submission_id, sql, prompt, results, False,
+        user_query=query, ip_address=ip, timestamp=datetime.now().isoformat()
+    )
+    return JsonResponse({'sql': sql, 'results': results}, status=200)
 
 @api_view(['GET'])
 def recent_submissions(request):

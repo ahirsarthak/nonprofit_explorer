@@ -1,8 +1,8 @@
 {
   "table": {
-    "name": "state_table",
-    "catalog": "my_catalog",
-    "namespace": "nonprofit",
+    "name": "bmo_table",
+    "catalog": "glue",
+    "namespace": "nonprofit_data_explorer",
     "description": "IRS Exempt Organizations Business Master File - November 2023",
     "primary_key": [
       "EIN"
