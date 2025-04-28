@@ -7,85 +7,67 @@ import uuid
 from openai import OpenAI
 import re
 
+from .models import client
+
+db = client["nonprofit"]
+
 def save_submission(query, ip_address):
     timestamp = datetime.utcnow().isoformat()
     submission_id = str(uuid.uuid4())
-    submission = {'id': submission_id, 'timestamp': timestamp, 'ip_address': ip_address, 'query': query}
-    path = os.path.join(settings.BASE_DIR, 'api', 'user_queries', 'submissions.json')
-
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    if os.path.exists(path):
-        with open(path, 'r') as f:
-            all_submissions = json.load(f)
-    else:
-        all_submissions = []
-
-    all_submissions.append(submission)
-    with open(path, 'w') as f:
-        json.dump(all_submissions, f, indent=2)
-
+    submission = {
+        'submission_id': submission_id,
+        'timestamp': timestamp,
+        'ip_address': ip_address,
+        'query': query
+    }
+    db["submissions"].insert_one(submission)
     return submission_id
 
 def get_last_submissions(n=5):
-    path = os.path.join(settings.BASE_DIR, 'api', 'user_queries', 'submissions.json')
-    if not os.path.exists(path):
-        return []
+    # Return the n most recent submissions from MongoDB
+    cursor = db["submissions"].find().sort("timestamp", -1).limit(n)
+    submissions = []
+    for sub in cursor:
+        submissions.append({
+            "_id": str(sub["_id"]),
+            "submission_id": sub.get("submission_id"),
+            "query": sub.get("query")
+        })
+    return submissions
 
-    with open(path, 'r') as f:
-        submissions = json.load(f)
-
-    # Ensure all submissions have an 'id' (for backward compatibility)
-    for sub in submissions:
-        if 'id' not in sub:
-            sub['id'] = str(uuid.uuid4())
-    # Save back if any were missing ids
-    with open(path, 'w') as f:
-        json.dump(submissions, f, indent=2)
-
-    return sorted(submissions, key=lambda x: x['timestamp'], reverse=True)[:n]
-
+def get_submission_by_id(submission_id):
+    return db["submissions"].find_one({'submission_id': submission_id})
 
 def _store_failed_submission(submission_id, sql, prompt, error_description, user_query=None, ip_address=None, timestamp=None):
-    path = os.path.join(settings.BASE_DIR, 'api', 'user_queries', 'failed_submissions.json')
-    failed = []
-    if os.path.exists(path):
-        with open(path, 'r') as f:
-            failed = json.load(f)
-    # Ensure all fields are present, set to None if missing
-    entry = {
-        'id': submission_id if submission_id is not None else None,
-        'timestamp': timestamp if timestamp is not None else None,
-        'ip_address': ip_address if ip_address is not None else None,
-        'user_query': user_query if user_query is not None else None,
-        'generated_prompt': prompt if prompt is not None else None,
-        'generated_sql': sql if sql is not None else None,
-        'error': True,
-        'error_description': error_description if error_description is not None else None,
-        'results': None
+    doc = {
+        "submission_id": submission_id,
+        "sql": sql,
+        #"prompt": prompt,
+        "error_message": error_description,
+        "user_query": user_query,
+        "ip_address": ip_address,
+        "timestamp": timestamp,
+        "error": True,
+        "results": None
     }
-    failed.append(entry)
-    with open(path, 'w') as f:
-        json.dump(failed, f, indent=2)
+    db["failed_submissions"].insert_one(doc)
 
-def _store_submission_output(submission_id, sql, prompt, results, error=None, user_query=None, ip_address=None, timestamp=None):
-    path = os.path.join(settings.BASE_DIR, 'api', 'user_queries', 'submissions.json')
-    if not os.path.exists(path):
-        return
-    with open(path, 'r') as f:
-        submissions = json.load(f)
-    for sub in submissions:
-        if sub.get('id') == submission_id:
-            sub['timestamp'] = timestamp
-            sub['ip_address'] = ip_address
-            sub['user_query'] = user_query
-            sub['generated_prompt'] = prompt
-            sub['generated_sql'] = sql
-            sub['results'] = results
-            sub['error'] = bool(error)
-            sub['error_description'] = error if error else None
-            break
-    with open(path, 'w') as f:
-        json.dump(submissions, f, indent=2)
+def _store_submission_output(submission_id, sql, prompt, results, is_error, user_query=None, ip_address=None, timestamp=None):
+    doc = {
+        "submission_id": submission_id,
+        "sql": sql,
+        #"prompt": prompt,
+        # "results": results,  # Results intentionally not saved
+        "is_error": is_error,
+        "user_query": user_query,
+        "ip_address": ip_address,
+        "timestamp": timestamp
+    }
+    db["submissions"].update_one(
+        {"submission_id": submission_id},
+        {"$set": doc},
+        upsert=True
+    )
 
 def extract_sql_from_response(response_text):
     # Extract SQL from a markdown code block (```sql ... ```)
@@ -130,9 +112,10 @@ def build_prompt(metadata, query):
         "- Output only a valid SELECT SQL query for Trino, compatible with Apache Iceberg tables.\n"
         "- Do NOT include any SQL comments (no -- or /* */).\n"
         "- Absolutely no UPDATE, DELETE, INSERT, CREATE, DROP, ALTER, SHOW, DESCRIBE, USE, GRANT, or REVOKE statements.\n"
-        "- Select the columns needed to answer the user's question, plus any additional fields that provide useful context based on the metadata description. Use good judgment.\n"
-        "- If the user asks for a non-SELECT action, reply exactly with: 'This action is not permitted. Only SELECT queries for data retrieval are allowed.'\n"
-        "- Otherwise, output only the SQL. No additional text or explanation.\n"
+        "- Select the columns needed to answer the user's question, plus any additional fields that provide useful context based on the metadata description. Use good judgment, but do not add unnecessary columns unless specifically requested.\n"
+        "- Enclose ALL table names and column names in double quotes (\" \") without exception. This is required for SQL standard compliance and to prevent syntax errors.\n"
+        "- If the user requests a non-SELECT action, reply exactly with: 'This action is not permitted. Only SELECT queries for data retrieval are allowed.'\n"
+        "- Output ONLY the SQL query. No additional text, explanations, or formatting.\n"
     )
 
 

@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global box sizing */
+* {
+  box-sizing: border-box;
+}
+
+/* Body background */
+body {
+  @apply bg-gray-100;
+}

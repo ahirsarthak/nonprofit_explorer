@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import JsonResponse
 from .trino_query import run_trino_query
-from .functions import is_query_allowed, save_submission, get_last_submissions, get_ip_from_request,  load_table_metadata, build_prompt, generate_sql_with_openai, _store_failed_submission, _store_submission_output
+from .functions import is_query_allowed, save_submission, get_last_submissions, get_ip_from_request,  load_table_metadata, build_prompt, generate_sql_with_openai, _store_failed_submission, get_submission_by_id, _store_submission_output
 #from .spark_query import run_query_on_iceberg
 from datetime import datetime
 import uuid
@@ -30,7 +30,7 @@ def interpret_and_query(request):
     sql = generate_sql_with_openai(prompt)
     allowed, forbidden_message = is_query_allowed(sql)
     if not allowed:
-        # Generate a submission ID for tracking, but DO NOT save to submissions.json
+        # Generate a submission ID for tracking
         submission_id = str(uuid.uuid4())
         _store_failed_submission(
             submission_id, sql, prompt, forbidden_message,
@@ -46,7 +46,6 @@ def interpret_and_query(request):
             submission_id, sql, prompt, str(e),
             user_query=query, ip_address=ip, timestamp=datetime.now().isoformat()
         )
-        # Only return a user-friendly message
         return JsonResponse({
             'error': 'An error occurred while processing your query. Please check your input or try again later.'
         }, status=400)
@@ -60,4 +59,19 @@ def interpret_and_query(request):
 
 @api_view(['GET'])
 def recent_submissions(request):
+    # MongoDB-backed: returns recent queries
     return JsonResponse({'recent_queries': get_last_submissions()})
+
+@api_view(['GET'])
+def rerun_submission(request, submission_id):
+    submission = get_submission_by_id(submission_id)
+    if not submission or 'sql' not in submission:
+        return JsonResponse({'error': 'Submission not found or missing SQL'}, status=404)
+    sql = submission['sql']
+    print(sql)
+    try:
+        results = run_trino_query(sql)
+        print(results)
+        return JsonResponse({'sql': sql, 'results': results}, status=200)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
