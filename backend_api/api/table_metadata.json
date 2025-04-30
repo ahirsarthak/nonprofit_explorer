@@ -20,7 +20,7 @@
       {
         "name": "EIN",
         "type": "STRING",
-        "description": "Employer Identification Number (EIN) assigned by IRS"
+        "description": "Employer Identification Number (EIN) assigned by IRS - XXXXXXXXX"
       },
       {
         "name": "NAME",

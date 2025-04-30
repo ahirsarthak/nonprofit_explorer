@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import JsonResponse
 from .trino_query import run_trino_query
-from .functions import is_query_allowed, save_submission, get_last_submissions, get_ip_from_request,  load_table_metadata, build_prompt, generate_sql_with_openai, _store_failed_submission, get_submission_by_id, _store_submission_output
+from .functions import is_query_allowed, save_submission, get_last_submissions, get_ip_from_request,  load_table_metadata, build_prompt, generate_sql_with_openai, _store_failed_submission, get_submission_by_id, _store_submission_output, save_feedback
 #from .spark_query import run_query_on_iceberg
 from datetime import datetime
 import uuid
@@ -61,6 +61,21 @@ def interpret_and_query(request):
 def recent_submissions(request):
     # MongoDB-backed: returns recent queries
     return JsonResponse({'recent_queries': get_last_submissions()})
+
+@api_view(['POST'])
+def feedback_api(request):
+    data = request.data
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip()
+    linkedin = data.get('linkedin', '').strip()
+    thoughts = data.get('thoughts', '').strip()
+    if not name or not email:
+        return JsonResponse({'error': 'Name and email are required.'}, status=400)
+    try:
+        save_feedback(name, email, linkedin, thoughts)
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 @api_view(['GET'])
 def rerun_submission(request, submission_id):

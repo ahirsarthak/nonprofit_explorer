@@ -1,15 +1,56 @@
 import { useState, useEffect } from "react";
-import QuerySection from "./components/QuerySection";
-import ResponseSection from "./components/ResponseSection";
-import Sidebar from "./components/Sidebar";
-import ColumnsModal from "./components/ColumnsModal";
-import LoadingSpinner from "./components/LoadingSpinner";
-import { saveAs } from "file-saver";
-import { unparse } from "papaparse";
+
+// Helper to get user's public IP address
+async function getUserIP() {
+  try {
+    const res = await fetch("https://api64.ipify.org?format=json");
+    const data = await res.json();
+    return data.ip;
+  } catch {
+    return null;
+  }
+}
+import QuerySection from "./components/QuerySection.jsx";
+import AboutThisToolModal from "./components/AboutThisToolModal.jsx";
+import ResponseSection from "./components/ResponseSection.jsx";
+import Sidebar from "./components/Sidebar.jsx";
+import { COLUMN_INFO } from "./components/columnInfo";
+import Leftbar from "./components/Leftbar.jsx";
+import ColumnsModal from "./components/ColumnsModal.jsx";
+import LoadingSpinner from "./components/LoadingSpinner.jsx";
+import ContactDevModal from "./components/ContactDevModal.jsx";
 
 const API_BASE = "http://127.0.0.1:8000/api";
 
 export default function App() {
+  const [showContact, setShowContact] = useState(false);
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  const [feedbackError, setFeedbackError] = useState(null);
+  const [feedbackSuccess, setFeedbackSuccess] = useState(false);
+
+  const handleContactSubmit = async (form) => {
+    setSubmittingFeedback(true);
+    setFeedbackError(null);
+    setFeedbackSuccess(false);
+    try {
+      const res = await fetch(`${API_BASE}/feedback/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFeedbackSuccess(true);
+      } else {
+        setFeedbackError(data.error || "An error occurred.");
+      }
+    } catch (err) {
+      setFeedbackError("Network error. Please try again.");
+    } finally {
+      setSubmittingFeedback(false);
+    }
+  };
+
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState([]);
   const [sql, setSql] = useState("");
@@ -18,17 +59,14 @@ export default function App() {
   const [columnsInfo, setColumnsInfo] = useState(null);
   const [showColumnsModal, setShowColumnsModal] = useState(false);
 
-  // Fetch recent queries
   const fetchRecent = async () => {
     try {
       const res = await fetch(`${API_BASE}/recent/`);
       const data = await res.json();
       setRecent(Array.isArray(data.recent_queries) ? data.recent_queries : []);
-      //setRecent(Array.isArray(data) ? data : (data.results || []));
-      console.log("[fetchRecent] Recent queries:", data);
     } catch (err) {
+      console.error("[fetchRecent] Error:", err);
       setRecent([]);
-      console.error("[fetchRecent] Error: ", err);
     }
   };
 
@@ -36,135 +74,168 @@ export default function App() {
     fetchRecent();
   }, []);
 
-  // Fetch columns info (dummy for now, replace with API if available)
-  const fetchColumnsInfo = async () => {
-    // Example: fetch from /api/columns/ if you have such an endpoint
-    // For now, use static example
-    setColumnsInfo([
-      { name: "ein", description: "Employer Identification Number" },
-      { name: "name", description: "Nonprofit Name" },
-      { name: "city", description: "City" },
-      { name: "state", description: "State" },
-      { name: "revenue", description: "Total Revenue" },
-    ]);
-    setShowColumnsModal(true);
-  };
-
-  // Submit a new query
   const handleQuerySubmit = async (query) => {
     setLoading(true);
     setError(null);
     setResponse([]);
-    console.log("[handleQuerySubmit] Submitting query:", query);
+    setSql("");
+
     try {
-      const payload = { query };
-      console.log("[handleQuerySubmit] Payload:", payload);
+      const ip_address = await getUserIP();
+      const payload = { query, ip_address };
       const res = await fetch(`${API_BASE}/query/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      console.log("[handleQuerySubmit] Response status:", res.status);
+
       const data = await res.json();
-      console.log("[handleQuerySubmit] Response data:", data);
+
       if (res.ok && Array.isArray(data.results)) {
         setResponse(data.results);
+        setSql(data.sql || "");
         setError(null);
-      } else if (data && data.error) {
+      } else {
         setError(data);
         setResponse([]);
-      } else {
-        setError({ error: "Unknown response from server." });
-        setResponse([]);
       }
-      await fetchRecent(); // Auto-refresh recent queries
     } catch (err) {
+      console.error("[handleQuerySubmit] Error:", err);
       setError({ error: err.message });
       setResponse([]);
-      console.error("[handleQuerySubmit] Error:", err);
     } finally {
       setLoading(false);
+      fetchRecent();
     }
   };
 
-  // Rerun a previous query
   const handleRerun = async (submission_id) => {
     setLoading(true);
     setError(null);
     setResponse([]);
-    console.log("[handleRerun] Rerunning submission:", submission_id);
+    setSql("");
+
     try {
       const res = await fetch(`${API_BASE}/rerun_submission/${submission_id}/`);
-      console.log("[handleRerun] Response status:", res.status);
       const data = await res.json();
-      console.log("[handleRerun] Response data:", data);
+
       if (res.ok && Array.isArray(data.results)) {
         setResponse(data.results);
+        setSql(data.sql || "");
         setError(null);
-      } else if (data && data.error) {
+      } else {
         setError(data);
         setResponse([]);
-      } else {
-        setError({ error: "Unknown response from server." });
-        setResponse([]);
       }
-      await fetchRecent(); // Auto-refresh recent queries
     } catch (err) {
+      console.error("[handleRerun] Error:", err);
       setError({ error: err.message });
       setResponse([]);
-      console.error("[handleRerun] Error:", err);
     } finally {
       setLoading(false);
+      fetchRecent();
     }
   };
 
-  // Download CSV
   const handleDownload = () => {
     if (!Array.isArray(response) || response.length === 0) return;
-    const csv = unparse(response);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    saveAs(blob, "results.csv");
-  };
-  
-  
-  
 
-  // Clear table
+    const columns = Object.keys(response[0]);
+    const csv = [columns.join(",")]
+      .concat(
+        response.map((row) =>
+          columns.map((col) => JSON.stringify(row[col] ?? "")).join(",")
+        )
+      )
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "results.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const handleClear = () => {
     setResponse([]);
     setSql("");
     setError(null);
   };
 
+  const fetchColumnsInfo = async () => {
+    setColumnsInfo([
+      { name: "ein", description: "Employer Identification Number" },
+      { name: "name", description: "Nonprofit Name" },
+      { name: "city", description: "City of Nonprofit" },
+      { name: "state", description: "State Abbreviation" },
+      { name: "revenue", description: "Total Revenue (USD)" },
+    ]);
+    setShowColumnsModal(true);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen flex flex-col bg-slate-50">
+
+      {/* Header */}
       <header className="w-full py-4 px-6 bg-white shadow flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-blue-700">Nonprofit Explorer</h1>
-        <span className="text-xs text-gray-400">Powered by React + Tailwind + Vite</span>
-      </header>
-      <main className="flex-1 flex flex-row gap-8 px-4 py-8 max-w-7xl mx-auto w-full">
-        <div className="flex-1 flex flex-col">
-          <QuerySection onSubmit={handleQuerySubmit} loading={loading} />
-          <ResponseSection
-            data={response}
-            error={error}
-            loading={loading}
-            onDownload={handleDownload}
-            onClear={handleClear}
-            sql={sql}
-          />
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold text-blue-700">Nonprofit Explorer</h1>
+          <AboutThisToolModal />
         </div>
+        <div className="flex items-center gap-4">
+          <span className="text-xs text-gray-400">Powered by React, Tailwind, Django, Apache Iceberg, AWS, MongoDB, Trino, OpenAI</span>
+          <button
+            className="ml-4 px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-800 text-sm font-semibold shadow"
+            onClick={() => { setShowContact(true); setFeedbackSuccess(false); setFeedbackError(null); }}
+          >
+            Contact Dev
+          </button>
+        </div>
+      </header>
+
+      {/* Main Layout */}
+      <main className="flex flex-row gap-6 px-4 py-4 w-full flex-1 overflow-hidden items-stretch">
+      {/* Main Content - now takes more space */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <QuerySection onSubmit={handleQuerySubmit} loading={loading} />
+          {loading ? (
+            <LoadingSpinner />
+          ) : (
+            <ResponseSection
+              data={response}
+              error={error}
+              loading={loading}
+              onDownload={handleDownload}
+              onClear={handleClear}
+              sql={sql}
+            />
+          )}
+        </div>
+
+        {/* Sidebar: Recent Queries + Columns Info */}
         <Sidebar
           recent={recent}
           onRerun={handleRerun}
           loading={loading}
-          columnsInfo={columnsInfo}
-          onShowColumns={fetchColumnsInfo}
+          columnsInfo={COLUMN_INFO}
         />
       </main>
-      {showColumnsModal && (
-        <ColumnsModal columnsInfo={columnsInfo || []} onClose={() => setShowColumnsModal(false)} />
-      )}
+
+      {/* Columns Info Modal */}
+      {/* (No longer used: columns info always shown in Leftbar) */}
+      {/* Contact Dev Modal */}
+      <ContactDevModal
+        open={showContact}
+        onClose={() => setShowContact(false)}
+        onSubmit={handleContactSubmit}
+        submitting={submittingFeedback}
+        error={feedbackError}
+        success={feedbackSuccess}
+      />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import interpret_and_query, recent_submissions, sample_api, rerun_submission
+from .views import interpret_and_query, recent_submissions, sample_api, rerun_submission, feedback_api
 
 
 print("ibn")
@@ -8,4 +8,5 @@ urlpatterns = [
     path('query/', interpret_and_query),
     path('recent/', recent_submissions),
     path('rerun_submission/<str:submission_id>/', rerun_submission),
+    path('feedback/', feedback_api),
 ]

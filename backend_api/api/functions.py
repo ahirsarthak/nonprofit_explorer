@@ -11,6 +11,17 @@ from .models import client
 
 db = client["nonprofit"]
 
+def save_feedback(name, email, linkedin, thoughts):
+    feedback = {
+        "name": name,
+        "email": email,
+        "linkedin": linkedin,
+        "thoughts": thoughts,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+    db["feedback"].insert_one(feedback)
+    return True
+
 def save_submission(query, ip_address):
     timestamp = datetime.utcnow().isoformat()
     submission_id = str(uuid.uuid4())
@@ -23,7 +34,7 @@ def save_submission(query, ip_address):
     db["submissions"].insert_one(submission)
     return submission_id
 
-def get_last_submissions(n=5):
+def get_last_submissions(n=6):
     # Return the n most recent submissions from MongoDB
     cursor = db["submissions"].find().sort("timestamp", -1).limit(n)
     submissions = []
@@ -108,13 +119,22 @@ def build_prompt(metadata, query):
     return (
         f"Metadata:\n{json.dumps(metadata)}\n\n"
         f"User Question:\n{query}\n\n"
-        "Instructions:\n"
+        "Rules:\n"
+        "- METADATA is your BIBLE\n"
         "- Output only a valid SELECT SQL query for Trino, compatible with Apache Iceberg tables.\n"
         "- Do NOT include any SQL comments (no -- or /* */).\n"
         "- Absolutely no UPDATE, DELETE, INSERT, CREATE, DROP, ALTER, SHOW, DESCRIBE, USE, GRANT, or REVOKE statements.\n"
-        "- Select the columns needed to answer the user's question, plus any additional fields that provide useful context based on the metadata description. Use good judgment, but do not add unnecessary columns unless specifically requested.\n"
+        "- Select columns needed to answer the user's question along with relevant fileds which one must know with it. Use your judgement and confirmed to exist in metadata.\n"
         "- Enclose ALL table names and column names in double quotes (\" \") without exception. This is required for SQL standard compliance and to prevent syntax errors.\n"
+        "- Match column and table names exactly as they appear in the metadata.\n"
+        "- If the user refers to a column using a synonym or variation (e.g., 'organization name' vs 'org name'), try to match it to the closest column name in metadata using context.\n"
+        "- If the user mentions a value (e.g., 'Alliance nonprofit'), infer the relevant column based on which column in the metadata typically contains such values.\n"
+        "- Do not include any column in SELECT or WHERE that is not present in the metadata.\n"
+        "- Do not invent or assume the existence of a column if it's not listed in the metadata columns.\n"
+        "- Apply fuzzy or case-insensitive filtering where appropriate using ILIKE or lower-cased comparisons (e.g., ILIKE '%alliance nonprofit%').\n"
         "- If the user requests a non-SELECT action, reply exactly with: 'This action is not permitted. Only SELECT queries for data retrieval are allowed.'\n"
+        "- If the user mentions a keyword or concept that matches the *description* of a value in any column's value_mappings, use the corresponding underlying *code* as the filter.\n"
+        "- Ensure the entire SQL query is syntactically correct and free of formatting issues like misplaced newlines or backslashes that could break Trino parsing.\n"
         "- Output ONLY the SQL query. No additional text, explanations, or formatting.\n"
     )
 
