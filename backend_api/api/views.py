@@ -37,10 +37,10 @@ def interpret_and_query(request):
 
     sql = generate_sql_with_openai(prompt)
     allowed, forbidden_message = is_query_allowed(sql)
-    print(f'line40: {sql}')
-    print(f'line41: {allowed}')
-    print(f'line42: {forbidden_message}')
-    print(f'allowed value: {allowed}, type: {type(allowed)}')
+    #print(f'line40: {sql}')
+    #print(f'line41: {allowed}')
+    #print(f'line42: {forbidden_message}')
+    #print(f'allowed value: {allowed}, type: {type(allowed)}')
     if not allowed:
         print("This should never print if not allowed is False")
         return handle_failed_submission(query, ip, sql, prompt, forbidden_message)
@@ -50,7 +50,7 @@ def interpret_and_query(request):
     except Exception as e:
         return handle_failed_submission(query, ip, sql, prompt, str(e))
 
-    print(f'line52: {results}')
+    #print(f'line52: {results}')
 
     if (not results or
     (isinstance(results, dict) and 'error' in results)):
