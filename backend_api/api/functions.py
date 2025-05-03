@@ -7,85 +7,36 @@ import uuid
 from openai import OpenAI
 import re
 
-def save_submission(query, ip_address):
-    timestamp = datetime.utcnow().isoformat()
-    submission_id = str(uuid.uuid4())
-    submission = {'id': submission_id, 'timestamp': timestamp, 'ip_address': ip_address, 'query': query}
-    path = os.path.join(settings.BASE_DIR, 'api', 'user_queries', 'submissions.json')
+from .models import client
 
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    if os.path.exists(path):
-        with open(path, 'r') as f:
-            all_submissions = json.load(f)
-    else:
-        all_submissions = []
-
-    all_submissions.append(submission)
-    with open(path, 'w') as f:
-        json.dump(all_submissions, f, indent=2)
-
-    return submission_id
-
-def get_last_submissions(n=5):
-    path = os.path.join(settings.BASE_DIR, 'api', 'user_queries', 'submissions.json')
-    if not os.path.exists(path):
-        return []
-
-    with open(path, 'r') as f:
-        submissions = json.load(f)
-
-    # Ensure all submissions have an 'id' (for backward compatibility)
-    for sub in submissions:
-        if 'id' not in sub:
-            sub['id'] = str(uuid.uuid4())
-    # Save back if any were missing ids
-    with open(path, 'w') as f:
-        json.dump(submissions, f, indent=2)
-
-    return sorted(submissions, key=lambda x: x['timestamp'], reverse=True)[:n]
-
+db = client["nonprofit"]
 
 def _store_failed_submission(submission_id, sql, prompt, error_description, user_query=None, ip_address=None, timestamp=None):
-    path = os.path.join(settings.BASE_DIR, 'api', 'user_queries', 'failed_submissions.json')
-    failed = []
-    if os.path.exists(path):
-        with open(path, 'r') as f:
-            failed = json.load(f)
-    # Ensure all fields are present, set to None if missing
-    entry = {
-        'id': submission_id if submission_id is not None else None,
-        'timestamp': timestamp if timestamp is not None else None,
-        'ip_address': ip_address if ip_address is not None else None,
-        'user_query': user_query if user_query is not None else None,
-        'generated_prompt': prompt if prompt is not None else None,
-        'generated_sql': sql if sql is not None else None,
-        'error': True,
-        'error_description': error_description if error_description is not None else None,
-        'results': None
+    doc = {
+        "submission_id": submission_id,
+        "sql": sql,
+        #"prompt": prompt,
+        "error_message": error_description,
+        "user_query": user_query,
+        "ip_address": ip_address,
+        "timestamp": timestamp,
+        "error": True,
+        "results": None
     }
-    failed.append(entry)
-    with open(path, 'w') as f:
-        json.dump(failed, f, indent=2)
+    db["failed_submissions"].insert_one(doc)
 
-def _store_submission_output(submission_id, sql, prompt, results, error=None, user_query=None, ip_address=None, timestamp=None):
-    path = os.path.join(settings.BASE_DIR, 'api', 'user_queries', 'submissions.json')
-    if not os.path.exists(path):
-        return
-    with open(path, 'r') as f:
-        submissions = json.load(f)
-    for sub in submissions:
-        if sub.get('id') == submission_id:
-            sub['timestamp'] = timestamp
-            sub['ip_address'] = ip_address
-            sub['user_query'] = user_query
-            sub['generated_prompt'] = prompt
-            sub['generated_sql'] = sql
-            sub['results'] = results
-            sub['error'] = bool(error)
-            sub['error_description'] = error if error else None
-            break
-    with open(path, 'w') as f:
-        json.dump(submissions, f, indent=2)
+def _store_submission_output(submission_id, sql, prompt, results, is_error, user_query=None, ip_address=None, timestamp=None):
+    doc = {
+        "submission_id": submission_id,
+        "sql": sql,
+        #"prompt": prompt,
+        # "results": results,  # Results intentionally not saved
+        "is_error": is_error,
+        "user_query": user_query,
+        "ip_address": ip_address,
+        "timestamp": timestamp
+    }
+    db["submissions"].insert_one(doc)
 
 def extract_sql_from_response(response_text):
     # Extract SQL from a markdown code block (```sql ... ```)
@@ -114,27 +65,35 @@ def extract_sql_from_response(response_text):
 
 
 def get_ip_from_request(request):
-    return request.data.get('ip_address') or \
-           request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR')) or None
+    """Extracts the user's IPv4 address from the Django request object."""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        # X-Forwarded-For may contain multiple IPs, take the first one
+        ip_list = [ip.strip() for ip in x_forwarded_for.split(',')]
+        for ip in ip_list:
+            if is_valid_ipv4(ip):
+                return ip
+    # Fallback to REMOTE_ADDR
+    remote_addr = request.META.get('REMOTE_ADDR')
+    if remote_addr and is_valid_ipv4(remote_addr):
+        return remote_addr
+    # If all else fails, return None
+    return None
+
+def is_valid_ipv4(ip):
+    """Validates if the input string is a valid IPv4 address."""
+    pattern = re.compile(r"""
+        ^
+        (?:(?:25[0-5]|2[0-4]\d|1?\d{1,2})\.){3}
+        (?:25[0-5]|2[0-4]\d|1?\d{1,2})
+        $
+    """, re.VERBOSE)
+    return bool(pattern.match(ip))
 
 def load_table_metadata():
     meta_path = os.path.join(settings.BASE_DIR, 'api', 'table_metadata.json')
     with open(meta_path, 'r') as f:
         return json.load(f)
-
-def build_prompt(metadata, query):
-    return (
-        f"Metadata:\n{json.dumps(metadata)}\n\n"
-        f"User Question:\n{query}\n\n"
-        "Instructions:\n"
-        "- Output only a valid SELECT SQL query for Trino, compatible with Apache Iceberg tables.\n"
-        "- Do NOT include any SQL comments (no -- or /* */).\n"
-        "- Absolutely no UPDATE, DELETE, INSERT, CREATE, DROP, ALTER, SHOW, DESCRIBE, USE, GRANT, or REVOKE statements.\n"
-        "- Select the columns needed to answer the user's question, plus any additional fields that provide useful context based on the metadata description. Use good judgment.\n"
-        "- If the user asks for a non-SELECT action, reply exactly with: 'This action is not permitted. Only SELECT queries for data retrieval are allowed.'\n"
-        "- Otherwise, output only the SQL. No additional text or explanation.\n"
-    )
-
 
 
 FORBIDDEN_SQL_KEYWORDS = [
@@ -163,8 +122,66 @@ def generate_sql_with_openai(prompt):
     response = client.chat.completions.create(
         model='gpt-4o',
         messages=[
-            {"role": "system", "content": "You are a helpful assistant for SQL generation."},
+            {"role": "system", "content": (
+                "You are a smart SQL query generator for IRS BMO nonprofit data. "
+                "The data is queried using Trino and stored in Apache Iceberg format. "
+                "You must use the provided metadata to translate user questions into safe, correct, and meaningful SELECT queries. "
+                "Use logic and context to include helpful columns, even if not explicitly mentioned. "
+                "Do not guess or invent anything not in the metadata. "
+                "Never return explanations — only a complete SQL SELECT query."
+        )},
             {"role": "user", "content": prompt}
         ]
     )
     return extract_sql_from_response(response.choices[0].message.content.strip())   
+
+def build_prompt(metadata, query):
+    return (
+        "Context:\n"
+        "You are generating SQL queries over the IRS Business Master File (BMO) for nonprofit organizations. "
+        "The data is stored in Apache Iceberg format and queried using Trino. "
+        "The table name is \"glue\".\"nonprofit_data_explorer\".\"bmo_table\".\n\n"
+        f"Metadata:\n{json.dumps(metadata)}\n\n"
+        f"User Question:\n{query}\n\n"
+        "Rules:\n"
+        "- METADATA is your BIBLE.\n"
+        "- Output only a valid SELECT SQL query for Trino, compatible with Apache Iceberg.\n"
+        "- Output ONLY the SQL query. No explanations, comments, or formatting.\n"
+        "- Do NOT include any SQL comments (no -- or /* */).\n"
+        "- Absolutely no UPDATE, DELETE, INSERT, CREATE, DROP, ALTER, SHOW, DESCRIBE, USE, GRANT, or REVOKE statements.\n"
+        "- Use only columns listed in metadata. Do not invent column names.\n"
+        "- Enclose ALL table and column names in double quotes (\" \").\n"
+        "- Include WHERE clause only if the user intent clearly maps to metadata columns and values.\n"
+        "- Use LOWER(column) LIKE LOWER('%value%') for fuzzy matching when appropriate.\n"
+        "- If the user refers to a fuzzy or vague column (e.g., 'organization name', 'nonprofit type'), map it intelligently to the correct column from metadata.\n"
+        "- If the user's question implies filtering (e.g., 'nonprofits in California'), infer the column (e.g., \"STATE\") and apply a correct filter.\n"
+        "- Also include relevant context columns that enhance understanding of the result — even if not explicitly requested (e.g., include 'NAME', 'STATE', or 'REVENUE' when showing largest orgs).\n"
+        "- If the user asks for a non-SELECT action, respond with: 'This action is not permitted. Only SELECT queries for data retrieval are allowed.'\n"
+        "- If the question cannot be mapped meaningfully to the metadata, return no SQL.\n"
+    )
+
+def save_feedback(name, email, linkedin, thoughts):
+    feedback = {
+        "name": name,
+        "email": email,
+        "linkedin": linkedin,
+        "thoughts": thoughts,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+    db["feedback"].insert_one(feedback)
+    return True
+
+def get_last_submissions(n=6):
+    # Return the n most recent submissions from MongoDB
+    cursor = db["submissions"].find().sort("timestamp", -1).limit(n)
+    submissions = []
+    for sub in cursor:
+        submissions.append({
+            "_id": str(sub["_id"]),
+            "submission_id": sub.get("submission_id"),
+            "query": sub.get("user_query")
+        })
+    return submissions
+
+def get_submission_by_id(submission_id):
+    return db["submissions"].find_one({'submission_id': submission_id})

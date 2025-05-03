@@ -14,7 +14,6 @@ def run_trino_query(sql: str, schema_name: str = "nonprofit_data_explorer"):
     This function is intended to be called by the Django view when a user enters a prompt that is converted to SQL.
     Args:
         sql (str): The SQL query generated from the user's prompt.
-        user_id (str): The unique user identifier (for multi-user isolation, if needed).
         schema_name (str): The Glue/Trino schema (database) to query. Defaults to 'nonprofit_data_explorer'.
     Returns:
         List[dict]: Query results as a list of dictionaries, or {"error": ...} on failure.

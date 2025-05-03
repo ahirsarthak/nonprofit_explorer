@@ -8,3 +8,5 @@ trino
 openai
 pymongo==4.12.0
 dnspython==2.7.0
+dotenv
+django-cors-headers
