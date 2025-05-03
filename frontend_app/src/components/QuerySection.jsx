@@ -7,7 +7,7 @@ export default function QuerySection({ onSubmit, loading }) {
     e.preventDefault();
     if (query.trim()) {
       onSubmit(query);
-      setQuery(""); // Optional: clear after submit
+      setQuery(""); 
     }
   }
 
@@ -21,7 +21,7 @@ export default function QuerySection({ onSubmit, loading }) {
           className="flex-1 min-h-[64px] border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-y bg-gray-50"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Type your SQL or natural language query..."
+          placeholder="Describe the nonprofit data you want to see… in Natural Language (e.g., Top 10 nonprofits in Delaware by revenue.)"
           disabled={loading}
         />
         <button
@@ -32,6 +32,7 @@ export default function QuerySection({ onSubmit, loading }) {
           {loading ? "Submitting..." : "Submit"}
         </button>
       </div>
+    
     </form>
   );
 }

@@ -3,10 +3,18 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import JsonResponse
 from .trino_query import run_trino_query
-from .functions import is_query_allowed, save_submission, get_last_submissions, get_ip_from_request,  load_table_metadata, build_prompt, generate_sql_with_openai, _store_failed_submission, get_submission_by_id, _store_submission_output, save_feedback
+from .functions import is_query_allowed, get_last_submissions, get_ip_from_request,  load_table_metadata, build_prompt, generate_sql_with_openai, _store_failed_submission, get_submission_by_id, _store_submission_output, save_feedback
 #from .spark_query import run_query_on_iceberg
 from datetime import datetime
 import uuid
+
+def handle_failed_submission(query, ip, sql, prompt, error_msg):
+    submission_id = str(uuid.uuid4())
+    _store_failed_submission(
+        submission_id, sql, prompt, error_msg,
+        user_query=query, ip_address=ip, timestamp=datetime.now().isoformat()
+    )
+    return JsonResponse({'error': error_msg}, status=400)
 
 @api_view(['GET', 'POST'])
 def sample_api(request):
@@ -29,33 +37,41 @@ def interpret_and_query(request):
 
     sql = generate_sql_with_openai(prompt)
     allowed, forbidden_message = is_query_allowed(sql)
+    print(f'line40: {sql}')
+    print(f'line41: {allowed}')
+    print(f'line42: {forbidden_message}')
+    print(f'allowed value: {allowed}, type: {type(allowed)}')
     if not allowed:
-        # Generate a submission ID for tracking
-        submission_id = str(uuid.uuid4())
-        _store_failed_submission(
-            submission_id, sql, prompt, forbidden_message,
-            user_query=query, ip_address=ip, timestamp=datetime.now().isoformat()
-        )
-        return JsonResponse({'error': forbidden_message}, status=400)
+        print("This should never print if not allowed is False")
+        return handle_failed_submission(query, ip, sql, prompt, forbidden_message)
 
     try:
         results = run_trino_query(sql)
     except Exception as e:
-        submission_id = save_submission(query, ip)
-        _store_failed_submission(
-            submission_id, sql, prompt, str(e),
-            user_query=query, ip_address=ip, timestamp=datetime.now().isoformat()
-        )
-        return JsonResponse({
-            'error': 'An error occurred while processing your query. Please check your input or try again later.'
-        }, status=400)
+        return handle_failed_submission(query, ip, sql, prompt, str(e))
 
-    submission_id = save_submission(query, ip)
+    print(f'line52: {results}')
+
+    if (not results or
+    (isinstance(results, dict) and 'error' in results)):
+
+    # If results is a dict with an error key, treat as failure
+        error_msg = results['error'] if isinstance(results, dict) and 'error' in results else 'No results found for your query.'
+        return handle_failed_submission(query, ip, sql, prompt, error_msg)
+
+
+    submission_id = str(uuid.uuid4())
     _store_submission_output(
         submission_id, sql, prompt, results, False,
         user_query=query, ip_address=ip, timestamp=datetime.now().isoformat()
     )
-    return JsonResponse({'sql': sql, 'results': results}, status=200)
+    return JsonResponse({
+        'submission_id': submission_id,
+        'timestamp': datetime.now().isoformat(),
+        'sql': sql,
+        'results': results,
+        'row_count': len(results)
+    }, status=200)
 
 @api_view(['GET'])
 def recent_submissions(request):

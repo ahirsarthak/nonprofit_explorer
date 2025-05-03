@@ -11,7 +11,7 @@ async function getUserIP() {
   }
 }
 import QuerySection from "./components/QuerySection.jsx";
-import AboutThisToolModal from "./components/AboutThisToolModal.jsx";
+import AboutThisToolModal from "./components/AboutThisToolModal";
 import ResponseSection from "./components/ResponseSection.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 import { COLUMN_INFO } from "./components/columnInfo";
@@ -19,6 +19,9 @@ import Leftbar from "./components/Leftbar.jsx";
 import ColumnsModal from "./components/ColumnsModal.jsx";
 import LoadingSpinner from "./components/LoadingSpinner.jsx";
 import ContactDevModal from "./components/ContactDevModal.jsx";
+
+const baseButton = "min-w-[120px] px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-800 text-sm font-semibold shadow text-center";
+
 
 const API_BASE = "http://127.0.0.1:8000/api";
 
@@ -183,17 +186,21 @@ export default function App() {
       {/* Header */}
       <header className="w-full py-4 px-6 bg-white shadow flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-blue-700">Nonprofit Explorer</h1>
-          <AboutThisToolModal />
+          <h1 className="text-2xl font-bold text-blue-700">Nonprofit BMO Explorer</h1>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-xs text-gray-400">Powered by React, Tailwind, Django, Apache Iceberg, AWS, MongoDB, Trino, OpenAI</span>
-          <button
-            className="ml-4 px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-800 text-sm font-semibold shadow"
-            onClick={() => { setShowContact(true); setFeedbackSuccess(false); setFeedbackError(null); }}
-          >
-            Contact Dev
-          </button>
+        <AboutThisToolModal buttonClass={baseButton} />
+        <button
+  className={baseButton}
+  onClick={() => {
+    setShowContact(true);
+    setFeedbackSuccess(false);
+    setFeedbackError(null);
+  }}
+>
+  Contact Dev
+</button>
+
         </div>
       </header>
 

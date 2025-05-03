@@ -31,9 +31,15 @@ export default function ContactDevModal({ open, onClose, onSubmit, submitting, e
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative">
-        <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-600" onClick={onClose}>&times;</button>
-        <h2 className="text-xl font-bold mb-4 text-blue-700">Contact Developer</h2>
+<div className="bg-white rounded-lg shadow-xl max-w-xl w-full p-6 relative">
+<button
+  className="absolute top-2 right-3 text-gray-400 hover:text-gray-600 text-2xl z-10"
+  onClick={onClose}
+  aria-label="Close Contact"
+>
+  &times;
+</button>
+        <h2 className="text-xl font-bold mb-4 text-blue-700">Contact Sarthak</h2>
         {showThanks ? (
           <div className="flex flex-col items-center justify-center py-8">
             <span className="text-green-700 font-semibold text-lg">Thanks for your thoughts!</span>
@@ -42,12 +48,12 @@ export default function ContactDevModal({ open, onClose, onSubmit, submitting, e
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium">Name <span className="text-red-500">*</span></label>
-            <input name="name" value={form.name} onChange={handleChange} className="mt-1 px-3 py-2 border rounded w-full" placeholder="Some Name" required />
+            <input name="name" value={form.name} onChange={handleChange} className="mt-1 px-3 py-2 border rounded w-full" placeholder="Name" required />
             {touched.name && !form.name.trim() && <span className="text-xs text-red-500">Name is required.</span>}
           </div>
           <div>
             <label className="block text-sm font-medium">Email <span className="text-red-500">*</span></label>
-            <input name="email" type="email" value={form.email} onChange={handleChange} className="mt-1 px-3 py-2 border rounded w-full" placeholder="some.email@mail.com" required />
+            <input name="email" type="email" value={form.email} onChange={handleChange} className="mt-1 px-3 py-2 border rounded w-full" placeholder="some.email@email.com" required />
             {touched.email && !form.email.trim() && <span className="text-xs text-red-500">Email is required.</span>}
             {touched.email && form.email && !isValidEmail(form.email) && <span className="text-xs text-red-500">Enter a valid email.</span>}
           </div>
