@@ -11,8 +11,13 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'your-default-secret-key')
 
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-
+#ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'defensive-experienced-started-nursery.trycloudflare.com',
+    'nonprofit-explorer.pages.dev',
+]
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -26,18 +31,27 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-]
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+#CORS_ALLOWED_ORIGINS = [
+#    "http://localhost:4173",
+#    "https://defensive-experienced-started-nursery.trycloudflare.com",
+#    "defensive-experienced-started-nursery.trycloudflare.com/api",
+#    "https://nonprofit-explorer.pages.dev",
+#    "nonprofit-explorer.pages.dev",
+#]
+
 
 ROOT_URLCONF = 'config.urls'
 
@@ -54,7 +68,7 @@ ASGI_APPLICATION = 'config.asgi.application'
 #    }
 #}
 
-STATIC_URL = '/static/'
+#STATIC_URL = '/static/'
 
 
 
