@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export JAVA_HOME="/opt/homebrew/opt/openjdk@21"
-export PATH="$JAVA_HOME/bin:$PATH"
+#export JAVA_HOME="/opt/homebrew/opt/openjdk@21"
+#export PATH="$JAVA_HOME/bin:$PATH"
 
 # Load environment variables from .env file
 if [ -f .env ]; then
