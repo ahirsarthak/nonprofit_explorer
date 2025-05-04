@@ -171,7 +171,7 @@ def save_feedback(name, email, linkedin, thoughts):
     db["feedback"].insert_one(feedback)
     return True
 
-def get_last_submissions(n=6):
+def get_last_submissions(n=10):
     # Return the n most recent submissions from MongoDB
     cursor = db["submissions"].find().sort("timestamp", -1).limit(n)
     submissions = []
