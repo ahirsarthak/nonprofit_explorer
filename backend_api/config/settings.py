@@ -18,6 +18,7 @@ ALLOWED_HOSTS = [
     'defensive-experienced-started-nursery.trycloudflare.com',
     'nonprofit-explorer.pages.dev',
     '172.178.56.7',
+    'nonprofit-backend.eastus.cloudapp.azure.com',
 ]
 INSTALLED_APPS = [
     'django.contrib.admin',
