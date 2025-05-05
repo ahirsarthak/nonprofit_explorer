@@ -39,7 +39,7 @@ export default function ContactDevModal({ open, onClose, onSubmit, submitting, e
 >
   &times;
 </button>
-        <h2 className="text-xl font-bold mb-4 text-blue-700">Contact Sarthak</h2>
+        <h2 className="text-xl font-bold mb-4 text-blue-700">Contact Form</h2>
         {showThanks ? (
           <div className="flex flex-col items-center justify-center py-8">
             <span className="text-green-700 font-semibold text-lg">Thanks for your thoughts!</span>
