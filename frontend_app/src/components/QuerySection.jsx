@@ -29,7 +29,7 @@ export default function QuerySection({ onSubmit, loading }) {
         />
         <button
           type="submit"
-          className="px-5 py-0.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow disabled:opacity-50 whitespace-nowrap"
+          className="px-5 py-0.5 bg-blue-600 hover:bg-blue-800 text-white font-semibold rounded shadow disabled:opacity-50 whitespace-nowrap"
           disabled={loading || !query.trim()}
         >
           {loading ? "Submitting..." : "Submit"}
