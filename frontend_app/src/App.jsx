@@ -184,7 +184,7 @@ export default function App() {
       {/* Header */}
       <header className="w-full py-4 px-6 bg-white shadow flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-blue-700">Nonprofit BMO Explorer</h1>
+          <h1 className="text-2xl font-bold text-blue-700">Nonprofit Explorer</h1>
         </div>
         <div className="flex items-center gap-4">
         <AboutThisToolModal buttonClass={baseButton} />
