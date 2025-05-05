@@ -15,7 +15,6 @@ import AboutThisToolModal from "./components/AboutThisToolModal";
 import ResponseSection from "./components/ResponseSection.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 import { COLUMN_INFO } from "./components/columnInfo";
-import Leftbar from "./components/Leftbar.jsx";
 import ColumnsModal from "./components/ColumnsModal.jsx";
 import LoadingSpinner from "./components/LoadingSpinner.jsx";
 import ContactDevModal from "./components/ContactDevModal.jsx";
