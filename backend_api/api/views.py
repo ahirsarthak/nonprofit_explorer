@@ -31,7 +31,7 @@ def interpret_and_query(request):
     query = request.data.get('query')
     if not query or not query.strip():
         return JsonResponse({'error': 'Please enter a question or query to generate results.'}, status=400)
-    ip = request.data.get('ip_address')
+    ip = request.data.get('ip')
     metadata = load_table_metadata()
     prompt = build_prompt(metadata, query)
 
