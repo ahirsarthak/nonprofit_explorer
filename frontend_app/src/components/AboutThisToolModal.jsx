@@ -33,7 +33,7 @@ export default function AboutThisToolModal({ buttonClass = defaultButtonClass })
 
             <div className="flex flex-col md:flex-row items-center justify-between mb-6 w-full gap-2">
               <div className="flex flex-col items-center md:items-start">
-                <span className="block text-blue-900 font-semibold text-sm">Created by SARTHAK AHIR</span>
+                <span className="block text-blue-900 font-semibold text-sm">by Sarthak Ahir</span>
                 <span className="block text-xs text-blue-700">Software & Data Enthusiast</span>
               </div>
               <div className="flex flex-col items-center md:items-end gap-1 mt-2 md:mt-0 text-xs break-all">
@@ -46,12 +46,12 @@ export default function AboutThisToolModal({ buttonClass = defaultButtonClass })
               </div>
             </div>
             <Section title="Overview & Significance">
-              <li>This project is a modern, full-stack data exploration platform for nonprofit BMO data in the United States.</li>
+              <li>This project is a full-stack data exploration platform for nonprofit BMO data in the United States.</li>
               <li>It enables users to query, analyze, and visualize large-scale nonprofit datasets with ease, leveraging cloud and open-source technologies.</li>
             </Section>
 
             <Section title="What are BMO Files?">
-              <li>BMO files refer to the raw data files containing bulk nonprofit organization informationm sourced from IRS.</li>
+              <li>BMO files refer to the raw data files containing bulk nonprofit organization information sourced from IRS.</li>
               <li>These files include details such as Employer Identification Number (EIN), organization name, address, state, city, revenue, group exemption, and IRS subsection codes.</li>
               <li>The project ingests, processes, and makes these BMO files queryable for end users, allowing for powerful search and reporting capabilities.</li>
             </Section>
@@ -60,7 +60,7 @@ export default function AboutThisToolModal({ buttonClass = defaultButtonClass })
               <li>Easier access to nonprofit BMO data for researchers, analysts, and the public.</li>
               <li>Handles large-scale data efficiently using distributed computing and modern data lakehouse architecture.</li>
               <li>Provides a user-friendly, modern interface for both technical and non-technical users.</li>
-              <li>Enables advanced analytics (in progress) through SQL and natural language queries.</li>
+              <li>Enables advanced data viz analytics (in progress) through Trino SQL and natural language queries.</li>
             </Section>
 
             <Divider />
@@ -69,7 +69,7 @@ export default function AboutThisToolModal({ buttonClass = defaultButtonClass })
               <Subsection title="Data Processing">
                 <li><b>Processing Engine</b>: <b>PySpark</b> is used for ingesting and transforming the raw BMO files.</li>
                 <li><b>Data Lake</b>: Processed data is stored as <b>Apache Iceberg</b> tables on AWS S3, enabling scalable, ACID-compliant data storage.</li>
-                <li><b>Catalog</b>: <b>AWS Glue</b> Catalogis used to register and manage the Iceberg tables, making them discoverable for querying.</li>
+                <li><b>Catalog</b>: <b>AWS Glue</b> Catalog is used to register and manage the <b>Iceberg tables</b>, making them discoverable for querying.</li>
               </Subsection>
               <Subsection title="Query Engine">
                 <li><b>Trino</b>: Acts as the distributed SQL query engine, connecting to the <b>Iceberg tables</b> via the Glue Catalog.</li>
@@ -78,7 +78,7 @@ export default function AboutThisToolModal({ buttonClass = defaultButtonClass })
               <Subsection title="Backend">
                 <li><b>Framework</b>: <b>Django REST Framework</b> (Python).</li>
                 <li><b>API</b>: Exposes endpoints for querying, recent searches, and metadata.</li>
-                <li><b>Deployment</b>: Hosted on Oracle Cloud for backend scalability and reliability. And it's free.</li>
+                <li><b>Deployment</b>: Hosted on <b>Azure VM</b>... it's free.</li>
                 <li><b>Integration</b>: Backend communicates with <b>Trino</b> for live SQL querying and with <b>MongoDB</b> for storing metadata, recent queries, and user submissions.</li>
               </Subsection>
               <Subsection title="Frontend">
@@ -101,7 +101,7 @@ export default function AboutThisToolModal({ buttonClass = defaultButtonClass })
             <Section title="Infrastructure & Cloud">
               <li><b>AWS S3</b>: Stores raw and processed data.</li>
               <li><b>AWS Glue</b>: Manages table metadata and schema.</li>
-              <li><b>Oracle Cloud</b>: Hosts the Django backend.</li>
+              <li><b>Azure Cloud</b>: Hosts the Django backend.</li>
               <li><b>Cloudflare</b>: Serves the frontend globally.</li>
               <li><b>MongoDB</b>: Stores user submissions, recent queries, and app metadata.</li>
             </Section>

@@ -2,7 +2,7 @@ export default function Sidebar({ recent, onRerun, loading, columnsInfo }) {
   return (
 <aside className="w-96 bg-white rounded-2xl shadow p-4 flex flex-col h-[90vh] overflow-hidden">
 <div className="flex-1 min-h-0 mb-4 overflow-y-auto">
-        <h2 className="text-lg font-semibold mb-2 text-blue-700">User Activity – Recent Queries</h2>
+        <h2 className="text-lg font-semibold mb-2 text-blue-700">User Activity - Recent Queries</h2>
         <ul className="flex flex-col gap-2">
           {recent.length === 0 && (
             <li className="text-gray-400">No recent queries.</li>

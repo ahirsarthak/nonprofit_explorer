@@ -59,7 +59,7 @@ def extract_sql_from_response(response_text):
             if ";" in line:
                 break
     if sql_lines:
-        print(sql_lines)
+        #print(sql_lines)
         return "\n".join(sql_lines).strip().rstrip(';')
     return None
 
@@ -120,7 +120,7 @@ def is_query_allowed(sql):
 def generate_sql_with_openai(prompt):
     client = OpenAI(api_key=os.environ["OPEN_AI_API"])
     response = client.chat.completions.create(
-        model='gpt-4o',
+        model='gpt-4.1',
         messages=[
             {"role": "system", "content": (
                 "You are a smart SQL query generator for IRS BMO nonprofit data. "
@@ -128,7 +128,7 @@ def generate_sql_with_openai(prompt):
                 "You must use the provided metadata to translate user questions into safe, correct, and meaningful SELECT queries. "
                 "Use logic and context to include helpful columns, even if not explicitly mentioned. "
                 "Do not guess or invent anything not in the metadata. "
-                "Never return explanations — only a complete SQL SELECT query."
+                "Never return explanations — only a complete TRINO SQL SELECT query."
         )},
             {"role": "user", "content": prompt}
         ]
@@ -145,12 +145,13 @@ def build_prompt(metadata, query):
         f"User Question:\n{query}\n\n"
         "Rules:\n"
         "- METADATA is your BIBLE.\n"
-        "- Output only a valid SELECT SQL query for Trino, compatible with Apache Iceberg.\n"
+        "- You must write SQL that is fully compatible with Trino. Do not use syntax or functions from other SQL dialects such as PostgreSQL or MySQL. compatible with Apache Iceberg.\n"
         "- Output ONLY the SQL query. No explanations, comments, or formatting.\n"
         "- Do NOT include any SQL comments (no -- or /* */).\n"
         "- Absolutely no UPDATE, DELETE, INSERT, CREATE, DROP, ALTER, SHOW, DESCRIBE, USE, GRANT, or REVOKE statements.\n"
         "- Use only columns listed in metadata. Do not invent column names.\n"
         "- Enclose ALL table and column names in double quotes (\" \").\n"
+        "- Output only valid Trino SQL syntax. Trino does NOT support PostgreSQL-specific features like SELECT DISTINCT ON — do not use them.\n"
         "- Include WHERE clause only if the user intent clearly maps to metadata columns and values.\n"
         "- Use LOWER(column) LIKE LOWER('%value%') for fuzzy matching when appropriate.\n"
         "- If the user refers to a fuzzy or vague column (e.g., 'organization name', 'nonprofit type'), map it intelligently to the correct column from metadata.\n"
@@ -158,6 +159,7 @@ def build_prompt(metadata, query):
         "- Also include relevant context columns that enhance understanding of the result — even if not explicitly requested (e.g., include 'NAME', 'STATE', or 'REVENUE' when showing largest orgs).\n"
         "- If the user asks for a non-SELECT action, respond with: 'This action is not permitted. Only SELECT queries for data retrieval are allowed.'\n"
         "- If the question cannot be mapped meaningfully to the metadata, return no SQL.\n"
+        "- If the query is select * then return 'streaming all rows not supported for now - working on it' \n"
     )
 
 def save_feedback(name, email, linkedin, thoughts):

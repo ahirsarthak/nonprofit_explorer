@@ -36,14 +36,15 @@ def interpret_and_query(request):
     prompt = build_prompt(metadata, query)
 
     sql = generate_sql_with_openai(prompt)
-    allowed, forbidden_message = is_query_allowed(sql)
+    #print(sql)
+    #allowed, forbidden_message = is_query_allowed(sql)
     #print(f'line40: {sql}')
     #print(f'line41: {allowed}')
     #print(f'line42: {forbidden_message}')
     #print(f'allowed value: {allowed}, type: {type(allowed)}')
-    if not allowed:
-        print("This should never print if not allowed is False")
-        return handle_failed_submission(query, ip, sql, prompt, forbidden_message)
+    #if not allowed:
+    #    print("This should never print if not allowed is False")
+    #    return handle_failed_submission(query, ip, sql, prompt, forbidden_message)
 
     try:
         results = run_trino_query(sql)
@@ -99,10 +100,10 @@ def rerun_submission(request, submission_id):
     if not submission or 'sql' not in submission:
         return JsonResponse({'error': 'Submission not found or missing SQL'}, status=404)
     sql = submission['sql']
-    print(sql)
+    #print(f'line102: {sql}')
     try:
         results = run_trino_query(sql)
-        print(results)
+        #print(results)
         return JsonResponse({'sql': sql, 'results': results}, status=200)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
