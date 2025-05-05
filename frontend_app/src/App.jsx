@@ -21,7 +21,7 @@ import ContactDevModal from "./components/ContactDevModal";
 
 const baseButton = "min-w-[120px] px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-800 text-sm font-semibold shadow text-center";
 
-const API_BASE = 'http://127.0.0.1:8000/api'
+const API_BASE = 'https://nonprofit-backend.eastus.cloudapp.azure.com/api'
 
 export default function App() {
   const [showContact, setShowContact] = useState(false);
