@@ -3,21 +3,21 @@ import { useState, useEffect } from "react";
 // Helper to get user's public IP address
 async function getUserIP() {
   try {
-    const res = await fetch("https://api64.ipify.org?format=json");
+    const res = await fetch("https://api.ipify.org?format=json");
     const data = await res.json();
     return data.ip;
   } catch {
     return null;
   }
 }
-import QuerySection from "./components/QuerySection.jsx";
+import QuerySection from "./components/QuerySection";
 import AboutThisToolModal from "./components/AboutThisToolModal";
-import ResponseSection from "./components/ResponseSection.jsx";
-import Sidebar from "./components/Sidebar.jsx";
+import ResponseSection from "./components/ResponseSection";
+import Sidebar from "./components/Sidebar";
 import { COLUMN_INFO } from "./components/columnInfo";
-import ColumnsModal from "./components/ColumnsModal.jsx";
-import LoadingSpinner from "./components/LoadingSpinner.jsx";
-import ContactDevModal from "./components/ContactDevModal.jsx";
+import ColumnsModal from "./components/ColumnsModal";
+import LoadingSpinner from "./components/LoadingSpinner";
+import ContactDevModal from "./components/ContactDevModal";
 
 const baseButton = "min-w-[120px] px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-800 text-sm font-semibold shadow text-center";
 

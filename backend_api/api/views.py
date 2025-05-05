@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import JsonResponse
 from .trino_query import run_trino_query
-from .functions import is_query_allowed, get_last_submissions, get_ip_from_request,  load_table_metadata, build_prompt, generate_sql_with_openai, _store_failed_submission, get_submission_by_id, _store_submission_output, save_feedback
+from .functions import is_query_allowed, get_last_submissions,  load_table_metadata, build_prompt, generate_sql_with_openai, _store_failed_submission, get_submission_by_id, _store_submission_output, save_feedback
 #from .spark_query import run_query_on_iceberg
 from datetime import datetime
 import uuid
@@ -31,7 +31,7 @@ def interpret_and_query(request):
     query = request.data.get('query')
     if not query or not query.strip():
         return JsonResponse({'error': 'Please enter a question or query to generate results.'}, status=400)
-    ip = get_ip_from_request(request)
+    ip = request.data.get('ip_address')
     metadata = load_table_metadata()
     prompt = build_prompt(metadata, query)
 
