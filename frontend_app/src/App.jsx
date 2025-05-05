@@ -82,8 +82,8 @@ export default function App() {
     setSql("");
 
     try {
-      const ip_address = await getUserIP();
-      const payload = { query, ip_address };
+      const ip = await getUserIP();
+      const payload = { query, ip };
       const res = await fetch(`${API_BASE}/query/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
